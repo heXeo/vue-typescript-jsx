@@ -1,9 +1,9 @@
 {
   "name": "@hexeo/vue-typescript-jsx",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Translate React JSX props into Vue VDOM data format at runtime",
   "main": "dist/index.js",
-  "types": "types/main.d.ts",
+  "types": "types/index.d.ts",
   "directories": {
     "lib": "lib",
     "test": "test"
