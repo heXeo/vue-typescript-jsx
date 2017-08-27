@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
     "jsx": "react",
@@ -25,7 +25,7 @@
     "lib": ["dom", "es5", "es2015.promise", "es2017"]
   },
   "exclude": ["node_modules"],
-  "include": ["**/*.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "include": ["**/*.d.ts", "lib/index.ts"],
   "compileOnSave": false,
   "buildOnSave": false
 }

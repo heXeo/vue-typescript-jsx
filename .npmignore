@@ -1,0 +1,8 @@
+node_modules
+test
+definitions
+lib
+tsconfig.json
+.gitignore
+.eslintrc
+.eslintignore
