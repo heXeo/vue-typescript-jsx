@@ -1,6 +1,6 @@
 {
   "name": "@hexeo/vue-typescript-jsx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Translate React JSX props into Vue VDOM data format at runtime",
   "main": "lib/index.ts",
   "directories": {
@@ -14,7 +14,12 @@
     "type": "git",
     "url": "git+https://github.com/heXeo/vue-typescript-jsx.git"
   },
-  "keywords": ["vue", "typescript", "jsx", "tsx"],
+  "keywords": [
+    "vue",
+    "typescript",
+    "jsx",
+    "tsx"
+  ],
   "author": "Leandre Gohy",
   "license": "MIT",
   "bugs": {
