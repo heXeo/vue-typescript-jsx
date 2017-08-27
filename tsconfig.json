@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react",
+    "jsxFactory": "h",
+    "allowJs": false,
+    "allowSyntheticDefaultImports": true,
+    "alwaysStrict": true,
+    "downlevelIteration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "inlineSources": true,
+    "noEmitHelpers": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "types": ["node", "mocha"],
+    "lib": ["dom", "es5", "es2015.promise", "es2017"]
+  },
+  "exclude": ["node_modules"],
+  "include": ["**/*.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "compileOnSave": false,
+  "buildOnSave": false
+}
