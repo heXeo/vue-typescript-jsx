@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /* eslint-disable no-underscore-dangle */
-var lodash_1 = require("lodash");
+var merge = require('lodash.merge');
 var isTopLevelKey = [
     // vue
     'attrs',
@@ -137,7 +137,7 @@ function getVNodeData(tag, data) {
     var directives = getDirectives(props, classifiedKeys.directive);
     var xlinks = getXLinks(props, classifiedKeys.xlink);
     var attributes = getAttributes(props, classifiedKeys.attribute);
-    return lodash_1.merge({}, topLevel, nestable, directives, xlinks, attributes);
+    return merge({}, topLevel, nestable, directives, xlinks, attributes);
 }
 function createElement($createElement, tag, data, children) {
     if (!data) {

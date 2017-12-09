@@ -1,2 +1,2 @@
 import Vue = require('vue')
-export const install: Vue.PluginFunction<never>
+export const install: Vue.PluginFunction<any>

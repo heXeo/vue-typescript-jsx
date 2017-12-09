@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import {merge} from 'lodash'
+const merge = require('lodash.merge')
 
 const isTopLevelKey = [
   // vue
