@@ -1,6 +1,4 @@
 /* eslint-disable no-underscore-dangle */
-const merge = require('lodash.merge')
-
 const isTopLevelKey = [
   // vue
   'attrs',
@@ -33,7 +31,7 @@ const isNestableKey = /^(domProps|on|nativeOn|hook)([\-_A-Z])/
 const isDirectiveKey = /^v-/
 const isXlinkKey = /^xlink([A-Z])/
 
-function classifyKeys(keys: string[]) {
+function classifyKeys(keys: string[]): any {
   return keys.reduce(
     (acc, key) => {
       if (isTopLevelKey.indexOf(key) !== -1) {
@@ -54,14 +52,14 @@ function classifyKeys(keys: string[]) {
   )
 }
 
-function getTopLevel(props: any, keys: string[]) {
+function getTopLevel(props: any, keys: string[]): any {
   return keys.reduce((acc: any, key) => {
     acc[key] = props[key]
     return acc
   }, {})
 }
 
-function getNestableTopLevelKeyAndKey(key: string) {
+function getNestableTopLevelKeyAndKey(key: string): any {
   const matches = key.match(isNestableKey)
 
   const prefix = matches[1]
@@ -80,7 +78,7 @@ function getNestableTopLevelKeyAndKey(key: string) {
   return {topLevelKey: prefix, key: suffix}
 }
 
-function getNestable(props: any, keys: string[]) {
+function getNestable(props: any, keys: string[]): any {
   return keys.reduce((acc: any, key) => {
     const keys = getNestableTopLevelKeyAndKey(key)
 
@@ -95,7 +93,7 @@ function getNestable(props: any, keys: string[]) {
   }, {})
 }
 
-function getDirectives(props: any, keys: string[]) {
+function getDirectives(props: any, keys: string[]): any {
   const directives = keys.reduce((acc: any, key) => {
     const name = key.replace(isDirectiveKey, '')
     acc.push({
@@ -108,7 +106,7 @@ function getDirectives(props: any, keys: string[]) {
   return {directives: directives}
 }
 
-function getXLinks(props: any, keys: string[]) {
+function getXLinks(props: any, keys: string[]): any {
   const xlinks = keys.reduce((acc: any, key) => {
     const xlinkKey = key.replace(isXlinkKey, (_m, p1) => {
       return `xlink:${p1.toLowerCase()}`
@@ -120,7 +118,7 @@ function getXLinks(props: any, keys: string[]) {
   return {attrs: xlinks}
 }
 
-function getAttributes(props: any, keys: string[]) {
+function getAttributes(props: any, keys: string[]): any {
   const attributes = keys.reduce((acc: any, key) => {
     acc[key] = props[key]
     return acc
@@ -130,7 +128,7 @@ function getAttributes(props: any, keys: string[]) {
 }
 
 const acceptValue = ['input', 'textarea', 'option', 'select']
-function mustUseDomProps(tag: string, type: string, attr: string) {
+function mustUseDomProps(tag: string, type: string, attr: string): boolean {
   return (
     (attr === 'value' && acceptValue.includes(tag) && type !== 'button') ||
     (attr === 'selected' && tag === 'option') ||
@@ -139,7 +137,7 @@ function mustUseDomProps(tag: string, type: string, attr: string) {
   )
 }
 
-function getVNodeData(tag: string, data: any) {
+function getVNodeData(tag: string, data: any): any {
   const props = Object.keys(data).reduce((acc: any, key) => {
     const value = data[key]
     const type = data['type']
@@ -160,7 +158,9 @@ function getVNodeData(tag: string, data: any) {
   const xlinks = getXLinks(props, classifiedKeys.xlink)
   const attributes = getAttributes(props, classifiedKeys.attribute)
 
-  return merge({}, topLevel, nestable, directives, xlinks, attributes)
+  return Object.assign({}, topLevel, nestable, directives, {
+    attrs: Object.assign({}, xlinks.attrs, attributes.attrs),
+  })
 }
 
 function createElement(
@@ -168,7 +168,7 @@ function createElement(
   tag: string,
   data: any,
   children: any[]
-) {
+): any {
   if (!data) {
     return $createElement(tag, data, children)
   }
@@ -177,7 +177,7 @@ function createElement(
   return $createElement(tag, options, children)
 }
 
-export function install(Vue: any) {
+export function install(Vue: any): void {
   const _render = Vue.prototype._render
   Vue.prototype._render = function() {
     if (!this._tsx) {

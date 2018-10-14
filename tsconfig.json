@@ -6,6 +6,7 @@
     "jsx": "react",
     "jsxFactory": "h",
     "allowJs": false,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "alwaysStrict": true,
     "downlevelIteration": true,
