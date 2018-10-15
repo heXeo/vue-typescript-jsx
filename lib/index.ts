@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-const isTopLevelKey = [
+const TOPLEVEL_KEYS = [
   // vue
   'attrs',
   'class',
@@ -27,104 +27,117 @@ const isTopLevelKey = [
   'routerViewDepth',
 ]
 
-const isNestableKey = /^(domProps|on|nativeOn|hook)([\-_A-Z])/
-const isDirectiveKey = /^v-/
-const isXlinkKey = /^xlink([A-Z])/
+const NESTABLE_PREFIXES = ['domProps', 'on', 'nativeOn', 'hook']
+const DIRECTIVE_PREFIX = 'v-'
+const XLINK_PREFIX = 'xlink'
+const PASSIVE_SUFFIX = '-passive'
 
-function classifyKeys(keys: string[]): any {
-  return keys.reduce(
+function startsWith(haystack: string, needle: string): boolean {
+  return haystack.slice(0, needle.length) === needle
+}
+
+function endsWith(haystack: string, needle: string): boolean {
+  return haystack.slice(-needle.length) === needle
+}
+
+function isTop(key: string): boolean {
+  return TOPLEVEL_KEYS.includes(key)
+}
+
+function isNestable(key: string): string | null {
+  return (
+    NESTABLE_PREFIXES.find((prefix) => {
+      return startsWith(key, prefix)
+    }) || null
+  )
+}
+
+function isDirective(key: string): boolean {
+  return startsWith(key, DIRECTIVE_PREFIX)
+}
+
+function isXLink(key: string): boolean {
+  return startsWith(key, XLINK_PREFIX)
+}
+
+function classifyKeys(props: any): any {
+  return Object.keys(props).reduce(
     (acc, key) => {
-      if (isTopLevelKey.indexOf(key) !== -1) {
+      if (isTop(key)) {
         acc.top.push(key)
-      } else if (key.match(isNestableKey) !== null) {
+      } else if (isNestable(key)) {
         acc.nestable.push(key)
-      } else if (key.match(isDirectiveKey) !== null) {
+      } else if (isDirective(key)) {
         acc.directive.push(key)
-      } else if (key.match(isXlinkKey) !== null) {
+      } else if (isXLink(key)) {
         acc.xlink.push(key)
       } else {
         acc.attribute.push(key)
       }
-
       return acc
     },
     {top: [], nestable: [], directive: [], xlink: [], attribute: []}
   )
 }
 
-function getTopLevel(props: any, keys: string[]): any {
+function processTopLevel(props: any, keys: string[], output: any = {}): any {
   return keys.reduce((acc: any, key) => {
     acc[key] = props[key]
     return acc
-  }, {})
+  }, output)
 }
 
-function getNestableTopLevelKeyAndKey(key: string): any {
-  const matches = key.match(isNestableKey)
+function parseNestableKey(key: string): any {
+  const prefix = isNestable(key)
+  let suffix = key.slice(prefix.length)
+  const firstChar = suffix.charAt(0).toLowerCase()
+  const rest = suffix.slice(1)
+  suffix = firstChar === '-' ? rest : `${firstChar}${rest}`
 
-  const prefix = matches[1]
-  let suffix = key.replace(isNestableKey, (_, _$1, $2) => {
-    return $2 === '-' ? '' : $2.toLowerCase()
-  })
-
-  if (prefix === 'on') {
-    // TODO: with .endsWith
-    const passiveMatches = suffix.match(/^(.+)-passive/)
-    if (passiveMatches) {
-      suffix = `&${passiveMatches[1]}`
-    }
+  if (prefix === 'on' && endsWith(suffix, PASSIVE_SUFFIX)) {
+    suffix = `&${suffix.slice(0, PASSIVE_SUFFIX.length)}`
   }
 
-  return {topLevelKey: prefix, key: suffix}
+  return {topKey: prefix, key: suffix}
 }
 
-function getNestable(props: any, keys: string[]): any {
-  return keys.reduce((acc: any, key) => {
-    const keys = getNestableTopLevelKeyAndKey(key)
-
-    if (keys === null) {
-      return acc
-    }
-
-    acc[keys.topLevelKey] = acc[keys.topLevelKey] || {}
-    acc[keys.topLevelKey][keys.key] = props[key]
-
+function processNestable(props: any, keys: string[], output: any = {}): any {
+  return keys.reduce((acc: any, rawKey) => {
+    const {topKey, key} = parseNestableKey(rawKey)
+    acc[topKey] = acc[topKey] || {}
+    acc[topKey][key] = props[rawKey]
     return acc
-  }, {})
+  }, output)
 }
 
-function getDirectives(props: any, keys: string[]): any {
-  const directives = keys.reduce((acc: any, key) => {
-    const name = key.replace(isDirectiveKey, '')
-    acc.push({
+function processDirectives(props: any, keys: string[], output: any = {}): any {
+  return keys.reduce((acc: any, key) => {
+    const name = key.slice(DIRECTIVE_PREFIX.length)
+    output.directives = output.directives || []
+    output.directives.push({
       name: name,
       value: props[key],
     })
     return acc
-  }, [])
-
-  return {directives: directives}
+  }, output)
 }
 
-function getXLinks(props: any, keys: string[]): any {
-  const xlinks = keys.reduce((acc: any, key) => {
-    const xlinkKey = key.replace(isXlinkKey, (_m, p1) => {
-      return `xlink:${p1.toLowerCase()}`
-    })
-    acc[xlinkKey] = props[key]
+function processXLinks(props: any, keys: string[], output: any = {}): any {
+  return keys.reduce((acc: any, key) => {
+    const attr = key.slice(XLINK_PREFIX.length).toLowerCase()
+    const xlink = `xlink:${attr}`
+    acc.attrs = acc.attrs || {}
+    acc.attrs[xlink] = props[key]
     return acc
-  }, {})
-
-  return {attrs: xlinks}
+  }, output)
 }
 
-function getAttributes(props: any, keys: string[]): any {
-  const attributes = keys.reduce((acc: any, key) => {
-    acc[key] = props[key]
+function processAttributes(props: any, keys: string[], output: any = {}): any {
+  return keys.reduce((acc: any, key) => {
+    acc.attrs = acc.attrs || {}
+    acc.attrs[key] = props[key]
     return acc
-  }, {})
-
-  return {attrs: attributes}
+  }, output)
 }
 
 const acceptValue = ['input', 'textarea', 'option', 'select']
@@ -149,18 +162,15 @@ function getVNodeData(tag: string, data: any): any {
     return acc
   }, {})
 
-  let keys = Object.keys(props)
-  const classifiedKeys = classifyKeys(keys)
+  const keys = classifyKeys(props)
 
-  const topLevel = getTopLevel(props, classifiedKeys.top)
-  const nestable = getNestable(props, classifiedKeys.nestable)
-  const directives = getDirectives(props, classifiedKeys.directive)
-  const xlinks = getXLinks(props, classifiedKeys.xlink)
-  const attributes = getAttributes(props, classifiedKeys.attribute)
+  let output = processTopLevel(props, keys.top)
+  output = processNestable(props, keys.nestable, output)
+  output = processDirectives(props, keys.directive, output)
+  output = processXLinks(props, keys.xlink, output)
+  output = processAttributes(props, keys.attribute, output)
 
-  return Object.assign({}, topLevel, nestable, directives, {
-    attrs: Object.assign({}, xlinks.attrs, attributes.attrs),
-  })
+  return output
 }
 
 function createElement(

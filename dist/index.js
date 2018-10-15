@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /* eslint-disable no-underscore-dangle */
-var isTopLevelKey = [
+var TOPLEVEL_KEYS = [
     // vue
     'attrs',
     'class',
@@ -27,21 +27,42 @@ var isTopLevelKey = [
     'routerView',
     'routerViewDepth',
 ];
-var isNestableKey = /^(domProps|on|nativeOn|hook)([\-_A-Z])/;
-var isDirectiveKey = /^v-/;
-var isXlinkKey = /^xlink([A-Z])/;
-function classifyKeys(keys) {
-    return keys.reduce(function (acc, key) {
-        if (isTopLevelKey.indexOf(key) !== -1) {
+var NESTABLE_PREFIXES = ['domProps', 'on', 'nativeOn', 'hook'];
+var DIRECTIVE_PREFIX = 'v-';
+var XLINK_PREFIX = 'xlink';
+var PASSIVE_SUFFIX = '-passive';
+function startsWith(haystack, needle) {
+    return haystack.slice(0, needle.length) === needle;
+}
+function endsWith(haystack, needle) {
+    return haystack.slice(-needle.length) === needle;
+}
+function isTop(key) {
+    return TOPLEVEL_KEYS.includes(key);
+}
+function isNestable(key) {
+    return (NESTABLE_PREFIXES.find(function (prefix) {
+        return startsWith(key, prefix);
+    }) || null);
+}
+function isDirective(key) {
+    return startsWith(key, DIRECTIVE_PREFIX);
+}
+function isXLink(key) {
+    return startsWith(key, XLINK_PREFIX);
+}
+function classifyKeys(props) {
+    return Object.keys(props).reduce(function (acc, key) {
+        if (isTop(key)) {
             acc.top.push(key);
         }
-        else if (key.match(isNestableKey) !== null) {
+        else if (isNestable(key)) {
             acc.nestable.push(key);
         }
-        else if (key.match(isDirectiveKey) !== null) {
+        else if (isDirective(key)) {
             acc.directive.push(key);
         }
-        else if (key.match(isXlinkKey) !== null) {
+        else if (isXLink(key)) {
             acc.xlink.push(key);
         }
         else {
@@ -50,65 +71,62 @@ function classifyKeys(keys) {
         return acc;
     }, { top: [], nestable: [], directive: [], xlink: [], attribute: [] });
 }
-function getTopLevel(props, keys) {
+function processTopLevel(props, keys, output) {
+    if (output === void 0) { output = {}; }
     return keys.reduce(function (acc, key) {
         acc[key] = props[key];
         return acc;
-    }, {});
+    }, output);
 }
-function getNestableTopLevelKeyAndKey(key) {
-    var matches = key.match(isNestableKey);
-    var prefix = matches[1];
-    var suffix = key.replace(isNestableKey, function (_, _$1, $2) {
-        return $2 === '-' ? '' : $2.toLowerCase();
-    });
-    if (prefix === 'on') {
-        // TODO: with .endsWith
-        var passiveMatches = suffix.match(/^(.+)-passive/);
-        if (passiveMatches) {
-            suffix = "&" + passiveMatches[1];
-        }
+function parseNestableKey(key) {
+    var prefix = isNestable(key);
+    var suffix = key.slice(prefix.length);
+    var firstChar = suffix.charAt(0).toLowerCase();
+    var rest = suffix.slice(1);
+    suffix = firstChar === '-' ? rest : "" + firstChar + rest;
+    if (prefix === 'on' && endsWith(suffix, PASSIVE_SUFFIX)) {
+        suffix = "&" + suffix.slice(0, PASSIVE_SUFFIX.length);
     }
-    return { topLevelKey: prefix, key: suffix };
+    return { topKey: prefix, key: suffix };
 }
-function getNestable(props, keys) {
-    return keys.reduce(function (acc, key) {
-        var keys = getNestableTopLevelKeyAndKey(key);
-        if (keys === null) {
-            return acc;
-        }
-        acc[keys.topLevelKey] = acc[keys.topLevelKey] || {};
-        acc[keys.topLevelKey][keys.key] = props[key];
+function processNestable(props, keys, output) {
+    if (output === void 0) { output = {}; }
+    return keys.reduce(function (acc, rawKey) {
+        var _a = parseNestableKey(rawKey), topKey = _a.topKey, key = _a.key;
+        acc[topKey] = acc[topKey] || {};
+        acc[topKey][key] = props[rawKey];
         return acc;
-    }, {});
+    }, output);
 }
-function getDirectives(props, keys) {
-    var directives = keys.reduce(function (acc, key) {
-        var name = key.replace(isDirectiveKey, '');
-        acc.push({
+function processDirectives(props, keys, output) {
+    if (output === void 0) { output = {}; }
+    return keys.reduce(function (acc, key) {
+        var name = key.slice(DIRECTIVE_PREFIX.length);
+        output.directives = output.directives || [];
+        output.directives.push({
             name: name,
             value: props[key],
         });
         return acc;
-    }, []);
-    return { directives: directives };
+    }, output);
 }
-function getXLinks(props, keys) {
-    var xlinks = keys.reduce(function (acc, key) {
-        var xlinkKey = key.replace(isXlinkKey, function (_m, p1) {
-            return "xlink:" + p1.toLowerCase();
-        });
-        acc[xlinkKey] = props[key];
+function processXLinks(props, keys, output) {
+    if (output === void 0) { output = {}; }
+    return keys.reduce(function (acc, key) {
+        var attr = key.slice(XLINK_PREFIX.length).toLowerCase();
+        var xlink = "xlink:" + attr;
+        acc.attrs = acc.attrs || {};
+        acc.attrs[xlink] = props[key];
         return acc;
-    }, {});
-    return { attrs: xlinks };
+    }, output);
 }
-function getAttributes(props, keys) {
-    var attributes = keys.reduce(function (acc, key) {
-        acc[key] = props[key];
+function processAttributes(props, keys, output) {
+    if (output === void 0) { output = {}; }
+    return keys.reduce(function (acc, key) {
+        acc.attrs = acc.attrs || {};
+        acc.attrs[key] = props[key];
         return acc;
-    }, {});
-    return { attrs: attributes };
+    }, output);
 }
 var acceptValue = ['input', 'textarea', 'option', 'select'];
 function mustUseDomProps(tag, type, attr) {
@@ -129,16 +147,13 @@ function getVNodeData(tag, data) {
         }
         return acc;
     }, {});
-    var keys = Object.keys(props);
-    var classifiedKeys = classifyKeys(keys);
-    var topLevel = getTopLevel(props, classifiedKeys.top);
-    var nestable = getNestable(props, classifiedKeys.nestable);
-    var directives = getDirectives(props, classifiedKeys.directive);
-    var xlinks = getXLinks(props, classifiedKeys.xlink);
-    var attributes = getAttributes(props, classifiedKeys.attribute);
-    return Object.assign({}, topLevel, nestable, directives, {
-        attrs: Object.assign({}, xlinks.attrs, attributes.attrs),
-    });
+    var keys = classifyKeys(props);
+    var output = processTopLevel(props, keys.top);
+    output = processNestable(props, keys.nestable, output);
+    output = processDirectives(props, keys.directive, output);
+    output = processXLinks(props, keys.xlink, output);
+    output = processAttributes(props, keys.attribute, output);
+    return output;
 }
 function createElement($createElement, tag, data, children) {
     if (!data) {
