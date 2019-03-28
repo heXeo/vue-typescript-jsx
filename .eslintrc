@@ -1,6 +1,6 @@
 {
-  "parser": "typescript-eslint-parser",
-  "plugins": ["typescript"],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "module",
@@ -11,23 +11,26 @@
   },
   "extends": ["google"],
   "rules": {
-    "typescript/class-name-casing": ["error"],
-    "typescript/explicit-function-return-type": [
+    "@typescript-eslint/class-name-casing": ["error"],
+    "@typescript-eslint/explicit-function-return-type": [
       "error",
       {"allowExpressions": true}
     ],
-    "typescript/explicit-member-accessibility": ["error"],
-    "typescript/interface-name-prefix": ["error", "never"],
-    "typescript/no-angle-bracket-type-assertion": ["error"],
-    "typescript/no-array-constructor": ["error"],
-    "typescript/no-empty-interface": ["error"],
-    "typescript/no-namespace": ["error", {"allowDefinitionFiles": true}],
-    "typescript/no-parameter-properties": ["error"],
-    "typescript/no-triple-slash-reference": ["error"],
-    "typescript/no-unused-vars": ["error"],
-    "typescript/no-use-before-define": ["error"],
-    "typescript/no-var-requires": ["error"],
-    "typescript/type-annotation-spacing": ["error"],
+    "@typescript-eslint/explicit-member-accessibility": ["error"],
+    "@typescript-eslint/interface-name-prefix": ["error", "never"],
+    "@typescript-eslint/no-angle-bracket-type-assertion": ["error"],
+    "@typescript-eslint/no-array-constructor": ["error"],
+    "@typescript-eslint/no-empty-interface": ["error"],
+    "@typescript-eslint/no-namespace": [
+      "error",
+      {"allowDefinitionFiles": true}
+    ],
+    "@typescript-eslint/no-parameter-properties": ["error"],
+    "@typescript-eslint/no-triple-slash-reference": ["error"],
+    "@typescript-eslint/no-unused-vars": ["error"],
+    "@typescript-eslint/no-use-before-define": ["error"],
+    "@typescript-eslint/no-var-requires": ["error"],
+    "@typescript-eslint/type-annotation-spacing": ["error"],
     "no-unused-vars": ["off"],
     "semi": ["error", "never"],
     "max-len": [
