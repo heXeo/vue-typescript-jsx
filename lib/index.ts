@@ -13,7 +13,7 @@ const TOPLEVEL_KEYS = [
   'props',
   'ref',
   'refInFor',
-  'scopedSlot',
+  'scopedSlots',
   'show',
   'slot',
   'staticClass',
